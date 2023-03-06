@@ -1,6 +1,14 @@
 # hic-scaffolding-nf
 Nextflow pipeline for scaffolding genome assemblies with Hi-C reads
 
+
+# Download juicer tools
+
+```
+wget http://hicfiles.tc4ga.com.s3.amazonaws.com/public/juicer/juicer_tools_1.11.09_jcuda.0.8.jar
+```
+
+
 ## Introduction
 This pipeline requires the following inputs:
 1. A fasta file containing assembled contigs (`--contigs`)
