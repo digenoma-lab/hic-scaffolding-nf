@@ -53,7 +53,19 @@ nextflow run WarrenLab/hic-scaffolding-nf \
     --contigs contigs.fa \
     --r1Reads hic_reads_R1.fastq.gz \
     --r2Reads hic_reads_R2.fastq.gz
+
 ```
+
+Kutral example
+
+```bash
+    nextflow run hic-scaffolding-nf/main.nf \
+          --contigs sl_female_ont_purge_r2.fasta \
+          --r1Reads DDU_AAOSDF_4_1_HFYVJDSX7.UDI488_clean.fastq.gz \
+          --r2Reads DDU_AAOSDF_4_2_HFYVJDSX7.UDI488_clean.fastq.gz \
+          -profile uoh
+```
+
 You'll need to add a couple options depending on your configuration (see
 section above).
 
