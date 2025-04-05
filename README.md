@@ -1,73 +1,126 @@
-# hic-scaffolding-nf
-Nextflow pipeline for scaffolding genome assemblies with Hi-C reads
 
 
-# Download juicer tools
+# Hi-C Scaffolding Nextflow Pipeline
 
+![Nextflow](https://img.shields.io/badge/Nextflow-%E2%89%A520.04.0-brightgreen)  
+A Nextflow pipeline for scaffolding genome assemblies using Hi-C reads with [CHROMAP][chromap], [YAHS][yahs], and [Juicer Tools][juicer_tools].
+
+---
+
+## Table of Contents
+- [Introduction](#introduction)
+- [Quick Start](#quick-start)
+- [Inputs](#inputs)
+- [Outputs](#outputs)
+- [Dependencies](#dependencies)
+- [Configuration](#configuration)
+  - [Running on Lewis Cluster](#running-on-lewis-cluster)
+  - [Running Locally/Elsewhere](#running-locally-or-on-other-clusters)
+- [Examples](#examples)
+- [Troubleshooting](#troubleshooting)
+- [References](#references)
+
+---
+
+## Introduction
+This pipeline scaffolds draft genome assemblies using Hi-C data in three steps:
+1. **Alignment**: Hi-C reads are mapped to contigs using [CHROMAP][chromap].
+2. **Scaffolding**: Contigs are ordered/oriented using [YAHS][yahs].
+3. **Visualization**: Prepares files for manual curation in [Juicebox][juicer_tools].
+
+---
+
+## Quick Start
+```bash
+nextflow run digenoma-lab/hic-scaffolding-nf \
+    --contigs contigs.fa \
+    --r1Reads hic_R1.fastq.gz \
+    --r2Reads hic_R2.fastq.gz \
+    -profile conda  # Use conda for dependencies
 ```
+
+---
+
+## Inputs
+| Parameter     | Format               | Description                     |
+|--------------|----------------------|---------------------------------|
+| `--contigs`  | FASTA                | Draft assembly contigs.         |
+| `--r1Reads`  | FASTQ(.gz)           | Hi-C paired-end reads (R1).     |
+| `--r2Reads`  | FASTQ(.gz)           | Hi-C paired-end reads (R2).     |
+
+---
+
+## Outputs
+Directory               | Files                          | Description
+------------------------|--------------------------------|-----------------------------
+`out/chromap/`          | `aligned.bam`                  | Hi-C read alignments.
+`out/scaffolds/`        | `yahs.out_scaffolds_final.fa`  | Scaffolded assembly (FASTA).
+`out/scaffolds/`        | `yahs.out_scaffolds_final.agp` | AGP file for scaffolding.
+`out/juicebox_input/`   | `out_JBAT.hic`                 | Juicebox-compatible Hi-C map.
+`out/juicebox_input/`   | `out_JBAT.assembly`            | Assembly file for Juicebox.
+
+---
+
+## Dependencies
+- **Core**:
+  - [Nextflow][nextflow] (≥20.04.0)
+  - [CHROMAP][chromap] (alignment)
+  - [YAHS][yahs] (scaffolding)
+  - [Juicer Tools][juicer_tools] (visualization)
+
+Install Juicer Tools:
+```bash
 wget http://hicfiles.tc4ga.com.s3.amazonaws.com/public/juicer/juicer_tools_1.11.09_jcuda.0.8.jar
 ```
 
-
-## Introduction
-This pipeline requires the following inputs:
-1. A fasta file containing assembled contigs (`--contigs`)
-2. Hi-C reads in paired-end fastq(.gz) format (`--r1Reads` and `--r2Reads`)
-
-It then performs the following tasks:
-1. Aligns the Hi-C reads to the contigs using [chromap][chromap]
-2. Scaffolds the contigs using [yahs][yahs]
-3. Prepares all the files you need to do manual curation in
-   [Juicebox][juicer_tools]
-
-and produces the following outputs:
-* Alignments in bam format (`out/chromap/aligned.bam`)
-* A scaffolded assembly in both agp and fasta formats
-  (`out/scaffolds/yahs.out_scaffolds_final.[agp,fa]`)
-* `.hic` and `.assembly` files for loading in Juicebox Assembly Tools
-  (`out/juicebox_input/out_JBAT.[hic,assembly]`)
+---
 
 ## Configuration
-### Running on Lewis
-If you're running this on the Lewis cluster, I've already got a profile set up
-with everything you need, so just add `-profile lewis` to the command and
-you're good to go.
 
-### Running on another cluster/cloud/locally
-This pipeline has the following dependencies:
-* [nextflow][nextflow]
-* [chromap][chromap]
-* [yahs][yahs]
-* [JuicerTools][juicer_tools]
+### Running Locally or on Other Clusters
+1. **Conda** (recommended for CHROMAP/YAHS):
+   ```bash
+   -profile conda
+   ```
+2. **Manual dependency paths**:
+   ```bash
+   --juicer_tools_jar /path/to/juicer_tools.jar
+   ```
 
-Nextflow must be in your path. You can get nextflow to make a conda environment
-containing chromap and yahs for you with `-profile conda` (note one dash!).
-JuicerTools is distributed as a jar file, so you need to tell the pipeline
-where it is by adding the argument `--juicer-tools-jar /path/to/jar` (note two
-dashes!). You can also add this stuff to a config file called `nextflow.config`
-in the directory from which you're running it (see nextflow documentation).
-
-## Running
-```bash
-nextflow run WarrenLab/hic-scaffolding-nf \
-    --contigs contigs.fa \
-    --r1Reads hic_reads_R1.fastq.gz \
-    --r2Reads hic_reads_R2.fastq.gz
-
+Add custom paths in `nextflow.config`:
+```nextflow
+params {
+  juicer_tools_jar = "/path/to/juicer_tools.jar"
+}
 ```
 
-Kutral example
+---
 
+## Examples
+
+### Basic Run
 ```bash
-    nextflow run hic-scaffolding-nf/main.nf \
-          --contigs sl_female_ont_purge_r2.fasta \
-          --r1Reads DDU_AAOSDF_4_1_HFYVJDSX7.UDI488_clean.fastq.gz \
-          --r2Reads DDU_AAOSDF_4_2_HFYVJDSX7.UDI488_clean.fastq.gz \
-          -profile uoh
+nextflow run hic-scaffolding-nf/main.nf \
+    --contigs sl_female_ont_purge_r2.fasta \
+    --r1Reads DDU_AAOSDF_4_1_HFYVJDSX7.UDI488_clean.fastq.gz \
+    --r2Reads DDU_AAOSDF_4_2_HFYVJDSX7.UDI488_clean.fastq.gz \
+    -profile uoh  # Example profile
 ```
 
-You'll need to add a couple options depending on your configuration (see
-section above).
+---
+
+## Troubleshooting
+- **Missing files**: Ensure all input paths are correct.
+- **Conda issues**: Use `-profile conda` or install dependencies manually.
+- **Juicer Tools**: Specify the JAR path with `--juicer_tools_jar`.
+
+---
+
+## References
+- [CHROMAP][chromap]  
+- [YAHS][yahs]  
+- [Juicer Tools][juicer_tools]  
+- [Nextflow Docs][nextflow]  
 
 [nextflow]: https://www.nextflow.io/
 [chromap]: https://github.com/haowenz/chromap
