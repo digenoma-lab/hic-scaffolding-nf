@@ -36,15 +36,21 @@ process CHROMAP_INDEX {
 
     output:
     path("contigs.index")
+   
 
+    script:
+    def pchr=""
+    if(params.large==true){
+	pchr=" -k 21 -w 14 "
+    }
     """
-    chromap -i -r $contigsFasta -o contigs.index
+    chromap -i $pchr -r $contigsFasta -o contigs.index
     """
 }
 
 process CHROMAP_ALIGN {
     
-     publishDir "$params.outdir/chromap", mode: "copy" 
+    publishDir "$params.outdir/chromap", mode: "copy" 
 
     input:
     path(contigsFasta)
@@ -55,8 +61,13 @@ process CHROMAP_ALIGN {
     output:
     path("aligned.bam")
 
-    """
+   script:
+    def pchr=""
+    if(params.large==true){
+	pchr=" -k 21 -w 14 "
+    }
 
+    """
     chromap \
         --preset hic \
         -r $contigsFasta \
@@ -64,7 +75,7 @@ process CHROMAP_ALIGN {
         --remove-pcr-duplicates \
         -1 $r1Reads \
         -2 $r2Reads \
-        --SAM \
+        --SAM $pchr \
         -o aligned.sam \
         -t ${task.cpus}
 
