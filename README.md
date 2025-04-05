@@ -14,7 +14,6 @@ A Nextflow pipeline for scaffolding genome assemblies using Hi-C reads with [CHR
 - [Outputs](#outputs)
 - [Dependencies](#dependencies)
 - [Configuration](#configuration)
-  - [Running on Lewis Cluster](#running-on-lewis-cluster)
   - [Running Locally/Elsewhere](#running-locally-or-on-other-clusters)
 - [Examples](#examples)
 - [Troubleshooting](#troubleshooting)
@@ -47,6 +46,7 @@ nextflow run digenoma-lab/hic-scaffolding-nf \
 | `--contigs`  | FASTA                | Draft assembly contigs.         |
 | `--r1Reads`  | FASTQ(.gz)           | Hi-C paired-end reads (R1).     |
 | `--r2Reads`  | FASTQ(.gz)           | Hi-C paired-end reads (R2).     |
+| `--large`  | Boolean           | Use this options for genomes > 4Gb     |
 
 ---
 
@@ -68,11 +68,6 @@ Directory               | Files                          | Description
   - [YAHS][yahs] (scaffolding)
   - [Juicer Tools][juicer_tools] (visualization)
 
-Install Juicer Tools:
-```bash
-wget http://hicfiles.tc4ga.com.s3.amazonaws.com/public/juicer/juicer_tools_1.11.09_jcuda.0.8.jar
-```
-
 ---
 
 ## Configuration
@@ -82,16 +77,51 @@ wget http://hicfiles.tc4ga.com.s3.amazonaws.com/public/juicer/juicer_tools_1.11.
    ```bash
    -profile conda
    ```
-2. **Manual dependency paths**:
-   ```bash
-   --juicer_tools_jar /path/to/juicer_tools.jar
-   ```
 
-Add custom paths in `nextflow.config`:
+Add custom configuration in `nextflow.config`:
 ```nextflow
 params {
   juicer_tools_jar = "/path/to/juicer_tools.jar"
 }
+process {
+    withName: 'PRINT_VERSIONS' {
+        cpus = 1
+        memory = 1.GB
+    }
+    
+   withName: 'SAMTOOLS_FAIDX' {
+        cpus = 1
+        memory = 1.GB
+    }
+
+    withName: 'CHROMAP_INDEX' {
+        cpus = 10
+        memory = 100.GB
+    }
+
+    withName: 'CHROMAP_ALIGN' {
+        cpus = 44
+        memory = 100.GB
+    }
+
+    withName: 'YAHS_SCAFFOLD' {
+        cpus = 10
+        memory = 100.GB
+    }
+
+
+    withName: 'JUICER_PRE' {
+        cpus = 10
+        memory = 100.GB
+    }
+
+    withName: 'ASSEMBLY_STATS' {
+        cpus = 1
+        memory = 10.GB
+    }
+
+}
+
 ```
 
 ---
