@@ -2,6 +2,9 @@
 nextflow.enable.dsl = 2
 
 process PRINT_VERSIONS {
+
+    publishDir "$params.outdir/chromap", mode: "copy" 
+
     output:
     path("versions.txt")
 
@@ -14,6 +17,8 @@ process PRINT_VERSIONS {
 }
 
 process SAMTOOLS_FAIDX {
+
+
     input:
     path(contigsFasta)
 
@@ -38,6 +43,9 @@ process CHROMAP_INDEX {
 }
 
 process CHROMAP_ALIGN {
+    
+     publishDir "$params.outdir/chromap", mode: "copy" 
+
     input:
     path(contigsFasta)
     path(contigsChromapIndex)
@@ -48,6 +56,7 @@ process CHROMAP_ALIGN {
     path("aligned.bam")
 
     """
+
     chromap \
         --preset hic \
         -r $contigsFasta \
@@ -59,11 +68,15 @@ process CHROMAP_ALIGN {
         -o aligned.sam \
         -t ${task.cpus}
 
-    samtools view -bh aligned.sam | samtools sort -n > aligned.bam
+    samtools view -@4 -h aligned.sam | sed 's:/[12]\\b::' | samtools view -@4 -Sb - | samtools sort -@6 -m 5G -n -o aligned.bam -
+
     """
 }
 
 process YAHS_SCAFFOLD {
+
+    publishDir "$params.outdir/scaffolds", mode: "copy"
+
     input:
     path("contigs.fa")
     path("contigs.fa.fai")
@@ -80,6 +93,9 @@ process YAHS_SCAFFOLD {
 }
 
 process JUICER_PRE {
+
+    publishDir "$params.outdir/juicebox_input", mode: "copy"
+
     input:
     path("yahs.out.bin")
     path("yahs.out_scaffolds_final.agp")
@@ -101,6 +117,9 @@ process JUICER_PRE {
 }
 
 process ASSEMBLY_STATS {
+
+    publishDir "$params.outdir/scaffolds", mode: "copy"
+
     input:
     path("yahs.out_scaffolds_final.fa")
 
