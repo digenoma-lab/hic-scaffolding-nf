@@ -1,11 +1,50 @@
 #!/usr/bin/env nextflow
+
+
 nextflow.enable.dsl = 2
+
+
+
+
+
+// Validate inputs
+def checkPath(path, paramName) {
+    if (!file(path).exists()) {
+        log.error "ERROR: File not found for --${paramName}: ${path}"
+        exit 1
+    }
+}
+
+
+
+// Check required parameters
+def checkParams() {
+    def required = ["r1Reads", "r2Reads", "contigs"]
+    def missing = required.findAll { !params.containsKey(it) }
+    if (missing) {
+        log.error "Missing required parameters: ${missing.join(', ')}"
+        exit 1
+    }
+}
+
+checkParams()
+checkPath(params.r1Reads, "r1Reads")
+checkPath(params.r2Reads, "r2Reads")
+checkPath(params.contigs, "contigs")
+
+
+
 
 process PRINT_VERSIONS {
 
     publishDir "$params.outdir/chromap", mode: "copy" 
 
-    output:
+ //singularity and nextflow container
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'oras://community.wave.seqera.io/library/assembly-stats_chromap_samtools_yahs:0c3cc8595aab615d' :
+        'community.wave.seqera.io/library/assembly-stats_chromap_samtools_yahs:0c3cc8595aab615d' }"
+    
+  output:
     path("versions.txt")
 
     """
@@ -18,7 +57,11 @@ process PRINT_VERSIONS {
 
 process SAMTOOLS_FAIDX {
 
-
+ //singularity and nextflow container
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'oras://community.wave.seqera.io/library/assembly-stats_chromap_samtools_yahs:0c3cc8595aab615d' :
+        'community.wave.seqera.io/library/assembly-stats_chromap_samtools_yahs:0c3cc8595aab615d' }"
+ 
     input:
     path(contigsFasta)
 
@@ -31,6 +74,12 @@ process SAMTOOLS_FAIDX {
 }
 
 process CHROMAP_INDEX {
+
+ //singularity and nextflow container
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'oras://community.wave.seqera.io/library/assembly-stats_chromap_samtools_yahs:0c3cc8595aab615d' :
+        'community.wave.seqera.io/library/assembly-stats_chromap_samtools_yahs:0c3cc8595aab615d' }"
+
     input:
     path(contigsFasta)
 
@@ -51,6 +100,11 @@ process CHROMAP_INDEX {
 process CHROMAP_ALIGN {
     
     publishDir "$params.outdir/chromap", mode: "copy" 
+
+ //singularity and nextflow container
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'oras://community.wave.seqera.io/library/assembly-stats_chromap_samtools_yahs:0c3cc8595aab615d' :
+        'community.wave.seqera.io/library/assembly-stats_chromap_samtools_yahs:0c3cc8595aab615d'}"
 
     input:
     path(contigsFasta)
@@ -88,6 +142,11 @@ process YAHS_SCAFFOLD {
 
     publishDir "$params.outdir/scaffolds", mode: "copy"
 
+ //singularity and nextflow container
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'oras://community.wave.seqera.io/library/assembly-stats_chromap_samtools_yahs:0c3cc8595aab615d' :
+        'community.wave.seqera.io/library/assembly-stats_chromap_samtools_yahs:0c3cc8595aab615d'}"
+ 
     input:
     path("contigs.fa")
     path("contigs.fa.fai")
@@ -131,6 +190,12 @@ process ASSEMBLY_STATS {
 
     publishDir "$params.outdir/scaffolds", mode: "copy"
 
+
+ //singularity and nextflow container
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'oras://community.wave.seqera.io/library/assembly-stats_chromap_samtools_yahs:0c3cc8595aab615d' :
+        'community.wave.seqera.io/library/assembly-stats_chromap_samtools_yahs:0c3cc8595aab615d' }"
+
     input:
     path("yahs.out_scaffolds_final.fa")
 
@@ -161,3 +226,10 @@ workflow {
 
     ASSEMBLY_STATS(YAHS_SCAFFOLD.out.fasta)
 }
+
+// Workflow completion message
+workflow.onComplete {
+    log.info "YAHS scaffolding finished! Results saved to ${params.outdir}"
+}
+
+
